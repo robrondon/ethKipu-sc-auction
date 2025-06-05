@@ -87,11 +87,37 @@ contract Auction {
     /// @notice Mapping to track total amount deposited by each user
     mapping(address user => uint256 totalAmount) public totalDepositedByUser;
 
-    // Events
-    event NewBid(address indexed bidder, uint amount);
+    // ============================================================================
+    // EVENTS
+    // ============================================================================
+
+    /**
+     * @notice Emitted when the auction ends
+     * @param winner Address of the winning bidder
+     * @param amount Winning bid amount
+     */
     event AuctionEnded(address winner, uint256 amount);
-    event RefundIssued(address indexed bidder, uint256 amount);
+
+    /**
+     * @notice Emitted when a new bid is placed
+     * @param bidder Address of the bidder
+     * @param amount Amount of the bid
+     */
+    event NewBid(address indexed bidder, uint amount);
+
+    /**
+     * @notice Emitted when a refund fails
+     * @param bidder Address that should have received the refund
+     * @param amount Amount that failed to be refunded
+     */
     event RefundFailed(address indexed bidder, uint256 amount);
+
+    /**
+     * @notice Emitted when a refund is successfully issued
+     * @param bidder Address receiving the refund
+     * @param amount Amount refunded (after commission)
+     */
+    event RefundIssued(address indexed bidder, uint256 amount);
 
     // Modifiers
     modifier onlyOwner() {
