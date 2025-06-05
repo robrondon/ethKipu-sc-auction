@@ -11,4 +11,8 @@ contract Auction {
     bool public auctionEnded;
     uint256 public auctionEndTime;
     address public owner;
+
+    // Current winner tracking
+    uint256 public highestBid;
+    address public highestBidder;
 }
