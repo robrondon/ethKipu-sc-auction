@@ -126,49 +126,41 @@ contract Auction {
         auctionEnded = true;
         emit AuctionEnded(highestBidder, highestBid);
 
-        // TODO: Send automatic refunds
+        refundUsers();
+    }
+
+    function _processRefund(address _user) internal returns (bool) {
+        require(_user != highestBidder, "Winner cannot withdraw refund");
+        require(totalDepositedByUser[_user] > 0, "No refund available");
+
+        uint256 totalDeposited = totalDepositedByUser[_user];
+        uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
+        uint256 amountToRefund = totalDeposited - commissions;
+
+        (bool success, ) = payable(_user).call{value: amountToRefund}("");
+
+        if (success) {
+            totalDepositedByUser[_user] = 0;
+            emit RefundIssued(_user, amountToRefund);
+        } else {
+            emit RefundFailed(_user, amountToRefund);
+        }
+
+        return success;
     }
 
     function refundUsers() public onlyOwner isAuctionFinished hasAWinner {
         for (uint256 i = 0; i < participants.length; i++) {
             address currentBidder = participants[i];
-
             if (currentBidder != highestBidder) {
-                uint256 totalDeposited = totalDepositedByUser[currentBidder];
-                uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
-                uint256 amountToRefund = totalDeposited - commissions;
-
-                (bool success, ) = payable(currentBidder).call{
-                    value: amountToRefund
-                }("");
-
-                if (success) {
-                    totalDepositedByUser[currentBidder] = 0;
-                    emit RefundIssued(currentBidder, amountToRefund);
-                } else {
-                    emit RefundFailed(currentBidder, amountToRefund);
-                }
+                _processRefund(currentBidder);
             }
         }
     }
 
     function withdrawRefund() external isAuctionFinished {
-        require(msg.sender != highestBidder, "Winner cannot withdraw refund");
-        require(totalDepositedByUser[msg.sender] > 0, "No refund available");
-
-        uint256 totalDeposited = totalDepositedByUser[msg.sender];
-        uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
-        uint256 amountToRefund = totalDeposited - commissions;
-
-        (bool success, ) = payable(msg.sender).call{value: amountToRefund}("");
-
-        if (success) {
-            totalDepositedByUser[msg.sender] = 0;
-            emit RefundIssued(msg.sender, amountToRefund);
-        } else {
-            emit RefundFailed(msg.sender, amountToRefund);
-            revert("Manual refund failed");
-        }
+        bool success = _processRefund(msg.sender);
+        require(success, "Manual refund failed");
     }
 
     function getWinner() external view returns (address, uint256) {
@@ -183,9 +175,7 @@ contract Auction {
         return bidsByUser[_user];
     }
 
-    function getUserTotalDeposited(
-        address _user
-    ) external view returns (uint256) {
+    function getUserTotalAmount(address _user) external view returns (uint256) {
         return totalDepositedByUser[_user];
     }
 }
