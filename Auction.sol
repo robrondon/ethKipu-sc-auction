@@ -25,6 +25,7 @@ contract Auction {
     }
 
     Bid[] public bids;
+
     mapping(address user => Bid[] bidsMade) public bidsByUser;
     mapping(address user => uint256 totalAmount) public totalDepositedByUser;
     mapping(address user => uint256 amount) public lastValidUserBid;
@@ -92,5 +93,23 @@ contract Auction {
         }
 
         emit NewBid(highestBidder, highestBid);
+    }
+
+    function getWinner() external view returns (address, uint256) {
+        return (highestBidder, highestBid);
+    }
+
+    function getAllBids() external view returns (Bid[] memory) {
+        return bids;
+    }
+
+    function getUserBids(address _user) external view returns (Bid[] memory) {
+        return bidsByUser[_user];
+    }
+
+    function getUserTotalDeposited(
+        address _user
+    ) external view returns (uint256) {
+        return totalDepositedByUser[_user];
     }
 }
