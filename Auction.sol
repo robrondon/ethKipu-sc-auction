@@ -39,25 +39,53 @@ contract Auction {
     /// @notice Address of the current highest bidder
     address public highestBidder;
 
-    // Bid tracking
+    // ============================================================================
+    // STRUCTS
+    // ============================================================================
+
+    /**
+     * @notice Structure to store individual bid information
+     * @param bidder Address of the bidder
+     * @param bidAmount Amount of the bid in wei
+     * @param timestamp Unix timestamp when the bid was placed
+     */
     struct Bid {
         address bidder;
         uint256 bidAmount;
         uint256 timestamp;
     }
 
+    /**
+     * @notice Structure to store user-specific bid information
+     * @param bidAmount Amount of the bid in wei
+     * @param timestamp Unix timestamp when the bid was placed
+     */
     struct UserBid {
         uint256 bidAmount;
         uint256 timestamp;
     }
 
+    // ============================================================================
+    // STORAGE ARRAYS AND MAPPINGS
+    // ============================================================================
+
+    /// @notice Array containing all bids placed in the auction
     Bid[] public bids;
+
+    /// @notice Array containing addresses of all auction participants
     address[] public participants;
 
-    mapping(address user => bool participated) public hasParticipated;
+    /// @notice Mapping to store all bids made by each user
     mapping(address user => UserBid[] bidsMade) public bidsByUser;
-    mapping(address user => uint256 totalAmount) public totalDepositedByUser;
+
+    /// @notice Mapping to check if a user has participated in the auction
+    mapping(address user => bool participated) public hasParticipated;
+
+    /// @notice Mapping to store the last valid bid amount for each user
     mapping(address user => uint256 amount) public lastValidUserBid;
+
+    /// @notice Mapping to track total amount deposited by each user
+    mapping(address user => uint256 totalAmount) public totalDepositedByUser;
 
     // Events
     event NewBid(address indexed bidder, uint amount);
