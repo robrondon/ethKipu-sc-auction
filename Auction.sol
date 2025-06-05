@@ -25,7 +25,9 @@ contract Auction {
     }
 
     Bid[] public bids;
+    address[] public participants;
 
+    mapping(address user => bool participated) public hasParticipated;
     mapping(address user => Bid[] bidsMade) public bidsByUser;
     mapping(address user => uint256 totalAmount) public totalDepositedByUser;
     mapping(address user => uint256 amount) public lastValidUserBid;
@@ -33,6 +35,7 @@ contract Auction {
     // Events
     event NewBid(address indexed bidder, uint amount);
     event AuctionEnded(address winner, uint256 amount);
+    event RefundIssued(address indexed bidder, uint256 amount);
 
     // Modifiers
     modifier onlyOwner() {
@@ -43,6 +46,17 @@ contract Auction {
     modifier isAuctionActive() {
         require(block.timestamp < auctionEndTime, "Auction has ended.");
         require(!auctionEnded, "Auction already ended.");
+        _;
+    }
+
+    modifier isAuctionFinished() {
+        require(block.timestamp > auctionEndTime, "Auction is still ongoing.");
+        require(auctionEnded, "Auction is not ended.");
+        _;
+    }
+
+    modifier hasAWinner() {
+        require(highestBidder != address(0), "There is no winner");
         _;
     }
 
@@ -89,6 +103,11 @@ contract Auction {
         highestBid = msg.value;
         highestBidder = msg.sender;
 
+        if (!hasParticipated[msg.sender]) {
+            participants.push(msg.sender);
+            hasParticipated[msg.sender] = true;
+        }
+
         if (auctionEndTime - block.timestamp < 10 minutes) {
             auctionEndTime = block.timestamp + TIME_EXTENSION;
         }
@@ -107,6 +126,27 @@ contract Auction {
         emit AuctionEnded(highestBidder, highestBid);
 
         // TODO: Send automatic refunds
+    }
+
+    function refundUsers() public onlyOwner isAuctionFinished hasAWinner {
+        for (uint256 i = 0; i < participants.length; i++) {
+            address currentBidder = participants[i];
+
+            if (currentBidder != highestBidder) {
+                uint256 totalDeposited = totalDepositedByUser[currentBidder];
+                uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
+                uint256 amountToRefund = totalDeposited - commissions;
+
+                (bool success, ) = payable(currentBidder).call{
+                    value: amountToRefund
+                }("");
+
+                require(success, "Refund failed");
+
+                totalDepositedByUser[currentBidder] = 0;
+                emit RefundIssued(currentBidder, amountToRefund);
+            }
+        }
     }
 
     function getWinner() external view returns (address, uint256) {
