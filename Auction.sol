@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
 contract Auction {
@@ -20,7 +20,11 @@ contract Auction {
     struct Bid {
         address bidder;
         uint256 bidAmount;
-        bool refunded;
+        uint256 timestamp;
+    }
+
+    struct UserBid {
+        uint256 bidAmount;
         uint256 timestamp;
     }
 
@@ -28,7 +32,7 @@ contract Auction {
     address[] public participants;
 
     mapping(address user => bool participated) public hasParticipated;
-    mapping(address user => Bid[] bidsMade) public bidsByUser;
+    mapping(address user => UserBid[] bidsMade) public bidsByUser;
     mapping(address user => uint256 totalAmount) public totalDepositedByUser;
     mapping(address user => uint256 amount) public lastValidUserBid;
 
@@ -93,12 +97,7 @@ contract Auction {
 
         // Updating user bids tracking
         bidsByUser[msg.sender].push(
-            Bid({
-                bidder: msg.sender,
-                bidAmount: msg.value,
-                refunded: false,
-                timestamp: block.timestamp
-            })
+            UserBid({bidAmount: msg.value, timestamp: block.timestamp})
         );
         lastValidUserBid[msg.sender] = msg.value;
         totalDepositedByUser[msg.sender] += msg.value;
@@ -108,7 +107,6 @@ contract Auction {
             Bid({
                 bidder: msg.sender,
                 bidAmount: msg.value,
-                refunded: false,
                 timestamp: block.timestamp
             })
         );
@@ -176,6 +174,28 @@ contract Auction {
         require(success, "Manual refund failed");
     }
 
+    function partialRefund() external isAuctionActive {
+        require(bidsByUser[msg.sender].length > 1, "Need multiple bids");
+        require(lastValidUserBid[msg.sender] > 0, "No valid bids");
+
+        uint256 availableRefund = totalDepositedByUser[msg.sender] -
+            lastValidUserBid[msg.sender];
+
+        require(availableRefund > 0, "No refund available");
+
+        uint256 commission = (availableRefund * COMMISSION_RATE) / 100;
+        uint256 amountToRefund = availableRefund - commission;
+
+        (bool success, ) = payable(msg.sender).call{value: amountToRefund}("");
+
+        if (success) {
+            totalDepositedByUser[msg.sender] = lastValidUserBid[msg.sender];
+            emit RefundIssued(msg.sender, amountToRefund);
+        } else {
+            emit RefundFailed(msg.sender, amountToRefund);
+        }
+    }
+
     function getWinner() external view returns (address, uint256) {
         return (highestBidder, highestBid);
     }
@@ -184,11 +204,21 @@ contract Auction {
         return bids;
     }
 
-    function getUserBids(address _user) external view returns (Bid[] memory) {
+    function getUserBids(
+        address _user
+    ) external view returns (UserBid[] memory) {
         return bidsByUser[_user];
     }
 
     function getUserTotalAmount(address _user) external view returns (uint256) {
         return totalDepositedByUser[_user];
+    }
+
+    receive() external payable {
+        revert("Use bid() function to participate");
+    }
+
+    fallback() external payable {
+        revert("Use bid() function to participate");
     }
 }
