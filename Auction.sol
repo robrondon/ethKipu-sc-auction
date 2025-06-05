@@ -36,6 +36,7 @@ contract Auction {
     event NewBid(address indexed bidder, uint amount);
     event AuctionEnded(address winner, uint256 amount);
     event RefundIssued(address indexed bidder, uint256 amount);
+    event RefundFailed(address indexed bidder, uint256 amount);
 
     // Modifiers
     modifier onlyOwner() {
@@ -141,11 +142,32 @@ contract Auction {
                     value: amountToRefund
                 }("");
 
-                require(success, "Refund failed");
-
-                totalDepositedByUser[currentBidder] = 0;
-                emit RefundIssued(currentBidder, amountToRefund);
+                if (success) {
+                    totalDepositedByUser[currentBidder] = 0;
+                    emit RefundIssued(currentBidder, amountToRefund);
+                } else {
+                    emit RefundFailed(currentBidder, amountToRefund);
+                }
             }
+        }
+    }
+
+    function withdrawRefund() external isAuctionFinished {
+        require(msg.sender != highestBidder, "Winner cannot withdraw refund");
+        require(totalDepositedByUser[msg.sender] > 0, "No refund available");
+
+        uint256 totalDeposited = totalDepositedByUser[msg.sender];
+        uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
+        uint256 amountToRefund = totalDeposited - commissions;
+
+        (bool success, ) = payable(msg.sender).call{value: amountToRefund}("");
+
+        if (success) {
+            totalDepositedByUser[msg.sender] = 0;
+            emit RefundIssued(msg.sender, amountToRefund);
+        } else {
+            emit RefundFailed(msg.sender, amountToRefund);
+            revert("Manual refund failed");
         }
     }
 
