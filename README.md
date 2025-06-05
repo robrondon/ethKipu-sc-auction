@@ -13,3 +13,23 @@ This contract allows users to participate in an auction by placing bids. The hig
 - **Time Extension**: Auction extends 10 minutes if a bid is placed in the last 10 minutes
 - **Automatic Refunds**: Non-winners get their money back (minus 2% commission)
 - **Partial Refunds**: Users can withdraw excess amounts during the auction
+
+## Deployment (Using Remix)
+
+1. **Open Remix IDE**: Go to https://remix.ethereum.org
+2. **Create New File**: Name it `Auction.sol`
+3. **Copy Contract Code**: Paste the Solidity code
+4. **Compile**:
+   - Go to "Solidity Compiler" tab
+   - Select compiler version 0.8.24
+   - Click "Compile Auction.sol"
+5. **Deploy**:
+   - Go to "Deploy & Run Transactions" tab
+   - Select "Injected Provider - MetaMask"
+   - Choose Sepolia network in MetaMask
+   - Enter duration in minutes (e.g., 1440 for 24 hours)
+   - Click "Deploy"
+6. **Verify on Etherscan**:
+   - Copy contract address
+   - Go to Sepolia Etherscan
+   - Verify and publish source code
