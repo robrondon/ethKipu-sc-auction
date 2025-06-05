@@ -32,6 +32,7 @@ contract Auction {
 
     // Events
     event NewBid(address indexed bidder, uint amount);
+    event AuctionEnded(address winner, uint256 amount);
 
     // Modifiers
     modifier onlyOwner() {
@@ -93,6 +94,19 @@ contract Auction {
         }
 
         emit NewBid(highestBidder, highestBid);
+    }
+
+    function endAuction() external onlyOwner {
+        require(
+            block.timestamp >= auctionEndTime,
+            "Auction cannot be ended yet"
+        );
+        require(!auctionEnded, "Auction already ended");
+
+        auctionEnded = true;
+        emit AuctionEnded(highestBidder, highestBid);
+
+        // TODO: Send automatic refunds
     }
 
     function getWinner() external view returns (address, uint256) {
