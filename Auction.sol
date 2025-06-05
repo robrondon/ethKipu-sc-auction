@@ -251,6 +251,11 @@ contract Auction {
         refundUsers();
     }
 
+    /**
+     * @notice Issues refunds to all non-winning participants (owner only)
+     * @dev Deducts 2% commission from each refund
+     * @dev Can only be called after auction has ended
+     */
     function refundUsers() public onlyOwner isAuctionFinished hasAWinner {
         for (uint256 i = 0; i < participants.length; i++) {
             address currentBidder = participants[i];
@@ -260,6 +265,11 @@ contract Auction {
         }
     }
 
+    /**
+     * @notice Allows users to manually withdraw their refund
+     * @dev Can only be called after auction has ended
+     * @dev Alternative to automatic refund processing
+     */
     function withdrawRefund() external isAuctionFinished {
         bool success = _processRefund(msg.sender);
         require(success, "Manual refund failed");
