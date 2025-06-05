@@ -15,4 +15,15 @@ contract Auction {
     // Current winner tracking
     uint256 public highestBid;
     address public highestBidder;
+
+    // Bid tracking
+    struct Bid {
+        uint256 bidAmount;
+        bool refunded;
+        uint256 timestamp;
+    }
+
+    Bid[] public bids;
+    mapping(address user => Bid[] bidsMade) public bidsByUser;
+    mapping(address user => uint256 amount) public lastValidBid;
 }
