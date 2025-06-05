@@ -66,9 +66,22 @@ contract Auction {
         auctionEndTime = block.timestamp + (_durationMinutes * 60);
     }
 
-    function withdrawFunds() external onlyOwner {
+    function withdrawFunds() external onlyOwner isAuctionFinished {
         require(address(this).balance > 0, "No funds to withdraw");
-        payable(owner).transfer(address(this).balance);
+
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (participants[i] != highestBidder) {
+                require(
+                    totalDepositedByUser[participants[i]] == 0,
+                    "Some users still need refund"
+                );
+            }
+        }
+
+        (bool success, ) = payable(owner).call{value: address(this).balance}(
+            ""
+        );
+        require(success, "Withdrawal failed");
     }
 
     function bid() external payable isAuctionActive {
