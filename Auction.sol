@@ -229,6 +229,11 @@ contract Auction {
         emit NewBid(highestBidder, highestBid);
     }
 
+    /**
+     * @notice Manually ends the auction (owner only)
+     * @dev Can only be called after the auction end time has passed
+     * @dev Automatically processes refunds for all non-winning participants
+     */
     function endAuction() external onlyOwner {
         require(
             block.timestamp >= auctionEndTime,
@@ -236,30 +241,14 @@ contract Auction {
         );
         require(!auctionEnded, "Auction already ended");
 
+        // If the end time passed, set the action as ended and refund users
         auctionEnded = true;
+
+        // Auction is finished
         emit AuctionEnded(highestBidder, highestBid);
 
+        // Tries to refund non-winning participants
         refundUsers();
-    }
-
-    function _processRefund(address _user) internal returns (bool) {
-        require(_user != highestBidder, "Winner cannot withdraw refund");
-        require(totalDepositedByUser[_user] > 0, "No refund available");
-
-        uint256 totalDeposited = totalDepositedByUser[_user];
-        uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
-        uint256 amountToRefund = totalDeposited - commissions;
-
-        (bool success, ) = payable(_user).call{value: amountToRefund}("");
-
-        if (success) {
-            totalDepositedByUser[_user] = 0;
-            emit RefundIssued(_user, amountToRefund);
-        } else {
-            emit RefundFailed(_user, amountToRefund);
-        }
-
-        return success;
     }
 
     function refundUsers() public onlyOwner isAuctionFinished hasAWinner {
@@ -332,6 +321,26 @@ contract Auction {
 
     function getUserTotalAmount(address _user) external view returns (uint256) {
         return totalDepositedByUser[_user];
+    }
+
+    function _processRefund(address _user) internal returns (bool) {
+        require(_user != highestBidder, "Winner cannot withdraw refund");
+        require(totalDepositedByUser[_user] > 0, "No refund available");
+
+        uint256 totalDeposited = totalDepositedByUser[_user];
+        uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
+        uint256 amountToRefund = totalDeposited - commissions;
+
+        (bool success, ) = payable(_user).call{value: amountToRefund}("");
+
+        if (success) {
+            totalDepositedByUser[_user] = 0;
+            emit RefundIssued(_user, amountToRefund);
+        } else {
+            emit RefundFailed(_user, amountToRefund);
+        }
+
+        return success;
     }
 
     receive() external payable {
