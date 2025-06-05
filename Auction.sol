@@ -119,29 +119,53 @@ contract Auction {
      */
     event RefundIssued(address indexed bidder, uint256 amount);
 
-    // Modifiers
+    // ============================================================================
+    // MODIFIERS
+    // ============================================================================
+
+    /**
+     * @notice Restricts function access to the auction owner only
+     */
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner has permission");
         _;
     }
 
+    /**
+     * @notice Ensures the auction is currently active
+     */
     modifier isAuctionActive() {
         require(block.timestamp < auctionEndTime, "Auction has ended.");
         require(!auctionEnded, "Auction already ended.");
         _;
     }
 
+    /**
+     * @notice Ensures the auction has finished
+     */
     modifier isAuctionFinished() {
         require(block.timestamp > auctionEndTime, "Auction is still ongoing.");
         require(auctionEnded, "Auction is not ended.");
         _;
     }
 
+    /**
+     * @notice Ensures there is a valid winner
+     */
     modifier hasAWinner() {
         require(highestBidder != address(0), "There is no winner");
         _;
     }
 
+    // ============================================================================
+    // CONSTRUCTOR
+    // ============================================================================
+
+    /**
+     * @notice Initializes the auction contract
+     * @dev Sets the auction duration and owner address
+     * @param _durationMinutes Duration of the auction in minutes (max 1 week)
+     */
     constructor(uint256 _durationMinutes) {
         require(_durationMinutes > 0, "Duration must be positive");
         require(_durationMinutes <= 10080, "Duration too long"); // Max 1 week
