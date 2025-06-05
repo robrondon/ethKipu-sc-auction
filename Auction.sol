@@ -18,6 +18,7 @@ contract Auction {
 
     // Bid tracking
     struct Bid {
+        address bidder;
         uint256 bidAmount;
         bool refunded;
         uint256 timestamp;
@@ -26,7 +27,10 @@ contract Auction {
     Bid[] public bids;
     mapping(address user => Bid[] bidsMade) public bidsByUser;
     mapping(address user => uint256 totalAmount) public totalDepositedByUser;
-    mapping(address user => uint256 amount) public lastValidBid;
+    mapping(address user => uint256 amount) public lastValidUserBid;
+
+    // Events
+    event NewBid(address indexed bidder, uint amount);
 
     // Modifiers
     modifier onlyOwner() {
@@ -35,9 +39,6 @@ contract Auction {
     }
 
     modifier isAuctionActive() {
-        // if(block.timestamp >  auctionEndTime && !auctionEnded) {
-        //   _endAuction();
-        // }
         require(block.timestamp < auctionEndTime, "Auction has ended.");
         require(!auctionEnded, "Auction already ended.");
         _;
@@ -51,5 +52,45 @@ contract Auction {
     function withdrawFunds() external onlyOwner {
         require(address(this).balance > 0, "No funds to withdraw");
         payable(owner).transfer(address(this).balance);
+    }
+
+    function bid() external payable isAuctionActive {
+        require(msg.value > 0, "Bid amount must be greater than zero");
+        require(
+            msg.value >= highestBid + ((highestBid * MIN_BID_INCREMENT) / 100),
+            "Bid must be at least 5% higher than current highest"
+        );
+
+        // Updating user bids tracking
+        bidsByUser[msg.sender].push(
+            Bid({
+                bidder: msg.sender,
+                bidAmount: msg.value,
+                refunded: false,
+                timestamp: block.timestamp
+            })
+        );
+        lastValidUserBid[msg.sender] = msg.value;
+        totalDepositedByUser[msg.sender] += msg.value;
+
+        // updating total bids
+        bids.push(
+            Bid({
+                bidder: msg.sender,
+                bidAmount: msg.value,
+                refunded: false,
+                timestamp: block.timestamp
+            })
+        );
+
+        // updating bid winner tracking
+        highestBid = msg.value;
+        highestBidder = msg.sender;
+
+        if (auctionEndTime - block.timestamp < 10 minutes) {
+            auctionEndTime = block.timestamp + TIME_EXTENSION;
+        }
+
+        emit NewBid(highestBidder, highestBid);
     }
 }
