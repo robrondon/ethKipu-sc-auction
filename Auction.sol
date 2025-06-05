@@ -66,6 +66,8 @@ contract Auction {
     }
 
     constructor(uint256 _durationMinutes) {
+        require(_durationMinutes > 0, "Duration must be positive");
+        require(_durationMinutes <= 10080, "Duration too long"); // Max 1 week
         owner = msg.sender;
         auctionEndTime = block.timestamp + (_durationMinutes * 60);
     }
