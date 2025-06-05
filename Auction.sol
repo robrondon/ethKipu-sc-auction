@@ -26,4 +26,19 @@ contract Auction {
     Bid[] public bids;
     mapping(address user => Bid[] bidsMade) public bidsByUser;
     mapping(address user => uint256 amount) public lastValidBid;
+
+    // Modifiers
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    modifier isAuctionActive() {
+        // if(block.timestamp >  auctionEndTime && !auctionEnded) {
+        //   _endAuction();
+        // }
+        require(block.timestamp < auctionEndTime, "Auction has ended.");
+        require(!auctionEnded, "Auction already ended.");
+        _;
+    }
 }
