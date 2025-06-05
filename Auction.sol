@@ -1,19 +1,42 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+/**
+ * @title Auction Smart Contract
+ * @author Robert Rondón
+ * @notice This contract implements an auction system with refunds and commission handling
+ */
 contract Auction {
-    // Constants
+    // ============================================================================
+    // CONSTANTS
+    // ============================================================================
+
+    /// @notice Commission rate charged on refunds (2%)
     uint256 public constant COMMISSION_RATE = 2; // 2%
+
+    /// @notice Minimum bid increment required (5% above current highest bid)
     uint256 public constant MIN_BID_INCREMENT = 5; // 5%
+
+    /// @notice Time extension when bid is placed in last 10 minutes
     uint256 public constant TIME_EXTENSION = 10 minutes;
 
-    // State variables
+    // ============================================================================
+    // STATE VARIABLES
+    // ============================================================================
+
+    /// @notice Indicates if the auction has been manually ended
     bool public auctionEnded;
+
+    /// @notice Unix timestamp when the auction ends
     uint256 public auctionEndTime;
+
+    /// @notice Address of the auction owner/creator
     address public owner;
 
-    // Current winner tracking
+    /// @notice Current highest bid amount
     uint256 public highestBid;
+
+    /// @notice Address of the current highest bidder
     address public highestBidder;
 
     // Bid tracking
