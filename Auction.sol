@@ -25,6 +25,7 @@ contract Auction {
 
     Bid[] public bids;
     mapping(address user => Bid[] bidsMade) public bidsByUser;
+    mapping(address user => uint256 totalAmount) public totalDepositedByUser;
     mapping(address user => uint256 amount) public lastValidBid;
 
     // Modifiers
@@ -45,5 +46,10 @@ contract Auction {
     constructor(uint256 _durationMinutes) {
         owner = msg.sender;
         auctionEndTime = block.timestamp + (_durationMinutes * 60);
+    }
+
+    function withdrawFunds() external onlyOwner {
+        require(address(this).balance > 0, "No funds to withdraw");
+        payable(owner).transfer(address(this).balance);
     }
 }
