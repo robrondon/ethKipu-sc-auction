@@ -173,24 +173,16 @@ contract Auction {
         auctionEndTime = block.timestamp + (_durationMinutes * 60);
     }
 
-    function withdrawFunds() external onlyOwner isAuctionFinished {
-        require(address(this).balance > 0, "No funds to withdraw");
+    // ============================================================================
+    // MAIN FUNCTIONS
+    // ============================================================================
 
-        for (uint256 i = 0; i < participants.length; i++) {
-            if (participants[i] != highestBidder) {
-                require(
-                    totalDepositedByUser[participants[i]] == 0,
-                    "Some users still need refund"
-                );
-            }
-        }
-
-        (bool success, ) = payable(owner).call{value: address(this).balance}(
-            ""
-        );
-        require(success, "Withdrawal failed");
-    }
-
+    /**
+     * @notice Places a bid in the auction
+     * @dev Bid must be at least 5% higher than current highest bid
+     * @dev Automatically extends auction if bid is placed within last 10 minutes
+     * @dev Tracks user participation and updates all relevant mappings
+     */
     function bid() external payable isAuctionActive {
         require(msg.value > 0, "Bid amount must be greater than zero");
         require(
@@ -198,14 +190,18 @@ contract Auction {
             "Bid must be at least 5% higher than current highest"
         );
 
-        // Updating user bids tracking
+        // Linking bids to an user
         bidsByUser[msg.sender].push(
             UserBid({bidAmount: msg.value, timestamp: block.timestamp})
         );
+
+        // Setting the bid as the valid one
         lastValidUserBid[msg.sender] = msg.value;
+
+        // Updating total user deposited amount
         totalDepositedByUser[msg.sender] += msg.value;
 
-        // updating total bids
+        // Adding new to allBids array
         bids.push(
             Bid({
                 bidder: msg.sender,
@@ -214,19 +210,22 @@ contract Auction {
             })
         );
 
-        // updating bid winner tracking
+        // Setting bid winner value and address
         highestBid = msg.value;
         highestBidder = msg.sender;
 
+        // Verify if is necessary to add user to participants array
         if (!hasParticipated[msg.sender]) {
             participants.push(msg.sender);
             hasParticipated[msg.sender] = true;
         }
 
+        // Implement time extension if applies
         if (auctionEndTime - block.timestamp < 10 minutes) {
             auctionEndTime = block.timestamp + TIME_EXTENSION;
         }
 
+        // Succesful bid
         emit NewBid(highestBidder, highestBid);
     }
 
@@ -297,6 +296,24 @@ contract Auction {
         } else {
             emit RefundFailed(msg.sender, amountToRefund);
         }
+    }
+
+    function withdrawFunds() external onlyOwner isAuctionFinished {
+        require(address(this).balance > 0, "No funds to withdraw");
+
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (participants[i] != highestBidder) {
+                require(
+                    totalDepositedByUser[participants[i]] == 0,
+                    "Some users still need refund"
+                );
+            }
+        }
+
+        (bool success, ) = payable(owner).call{value: address(this).balance}(
+            ""
+        );
+        require(success, "Withdrawal failed");
     }
 
     function getWinner() external view returns (address, uint256) {
