@@ -353,10 +353,22 @@ contract Auction {
         return success;
     }
 
+    // ============================================================================
+    // FALLBACK FUNCTIONS
+    // ============================================================================
+
+    /**
+     * @notice Rejects direct ETH transfers to the contract
+     * @dev Users must use the bid() function to participate
+     */
     receive() external payable {
         revert("Use bid() function to participate");
     }
 
+    /**
+     * @notice Rejects calls to non-existent functions
+     * @dev Users must use the bid() function to participate
+     */
     fallback() external payable {
         revert("Use bid() function to participate");
     }
