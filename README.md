@@ -54,3 +54,25 @@ This contract allows users to participate in an auction by placing bids. The hig
 | `refundUsers()`    | Refund all non-winners         | Owner only   |
 | `withdrawRefund()` | Claim your refund              | Participants |
 | `partialRefund()`  | Withdraw excess during auction | Participants |
+
+## Important Notes
+
+- **Minimum Bid**: Each bid must be at least 5% higher than the current highest
+- **Commission**: 2% fee is deducted from refunds
+- **Time Extension**: Auction extends if bids are placed in the last 10 minutes
+- **No Direct Transfers**: Must use `bid()` function, direct ETH transfers are rejected
+
+## Rules
+
+1. Auction has a set duration (defined at creation)
+2. Only the owner can end the auction
+3. Bids must be higher than the current highest bid by at least 5%
+4. Winner pays the full bid amount
+5. Losers get refunds minus 2% commission
+6. Late bids (within 10 minutes of end) extend the auction
+
+## Contact
+
+- **Student**: Robert Rondón
+- **Course**: Eth Kipu Ethereum Developer Pack
+- **Assignment**: Final Project - Module 2
