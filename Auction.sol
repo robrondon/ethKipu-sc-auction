@@ -307,9 +307,15 @@ contract Auction {
         }
     }
 
+    /**
+     * @notice Allows owner to withdraw all funds after auction completion
+     * @dev All non-winning participants must be refunded first
+     * @dev Can only be called after auction has ended
+     */
     function withdrawFunds() external onlyOwner isAuctionFinished {
         require(address(this).balance > 0, "No funds to withdraw");
 
+        // Verifies if all participants has been refunded
         for (uint256 i = 0; i < participants.length; i++) {
             if (participants[i] != highestBidder) {
                 require(
