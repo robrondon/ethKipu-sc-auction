@@ -275,20 +275,30 @@ contract Auction {
         require(success, "Manual refund failed");
     }
 
+    /**
+     * @notice Allows partial refund of excess bids during active auction
+     * @dev If users requires this, they will obtain all the excess bids
+     * @dev Requires user to have placed multiple bids
+     * @dev Deducts 2% commission from refunded amount
+     */
     function partialRefund() external isAuctionActive {
+        // Users must have more than one bid
         require(bidsByUser[msg.sender].length > 1, "Need multiple bids");
         require(lastValidUserBid[msg.sender] > 0, "No valid bids");
 
+        // Verify if they have available to refund
         uint256 availableRefund = totalDepositedByUser[msg.sender] -
             lastValidUserBid[msg.sender];
 
         require(availableRefund > 0, "No refund available");
 
+        // Calculate amount minus commisions
         uint256 commission = (availableRefund * COMMISSION_RATE) / 100;
         uint256 amountToRefund = availableRefund - commission;
 
         (bool success, ) = payable(msg.sender).call{value: amountToRefund}("");
 
+        // Emit events and set the valid bid as total deposited amount
         if (success) {
             totalDepositedByUser[msg.sender] = lastValidUserBid[msg.sender];
             emit RefundIssued(msg.sender, amountToRefund);
