@@ -372,16 +372,28 @@ contract Auction {
         return totalDepositedByUser[_user];
     }
 
+    // ============================================================================
+    // INTERNAL FUNCTIONS
+    // ============================================================================
+
+    /**
+     * @notice Internal function to process refunds with commission deduction
+     * @dev Validates refund eligibility and processes the transfer
+     * @param _user Address of the user to refund
+     * @return success Boolean indicating if the refund was successful
+     */
     function _processRefund(address _user) internal returns (bool) {
         require(_user != highestBidder, "Winner cannot withdraw refund");
         require(totalDepositedByUser[_user] > 0, "No refund available");
 
+        // Calculate the amount to refund
         uint256 totalDeposited = totalDepositedByUser[_user];
         uint256 commissions = (totalDeposited * COMMISSION_RATE) / 100;
         uint256 amountToRefund = totalDeposited - commissions;
 
         (bool success, ) = payable(_user).call{value: amountToRefund}("");
 
+        // Emit events if success or not
         if (success) {
             totalDepositedByUser[_user] = 0;
             emit RefundIssued(_user, amountToRefund);
