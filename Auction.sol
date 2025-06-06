@@ -247,8 +247,10 @@ contract Auction {
         // Auction is finished
         emit AuctionEnded(highestBidder, highestBid);
 
-        // Tries to refund non-winning participants
-        refundUsers();
+        // Tries to refund non-winning participants only if there are participants
+        if (participants.length > 0 && highestBidder != address(0)) {
+            refundUsers();
+        }
     }
 
     /**
