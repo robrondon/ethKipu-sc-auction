@@ -33,3 +33,24 @@ This contract allows users to participate in an auction by placing bids. The hig
    - Copy contract address
    - Go to Sepolia Etherscan
    - Verify and publish source code
+
+## Contract Information
+
+- **Network**: Sepolia Testnet
+- **Solidity Version**: ^0.8.24
+- **License**: MIT
+- **Commission Rate**: 2%
+- **Minimum Bid Increment**: 5%
+- **Time Extension**: 10 minutes
+
+## Key Functions
+
+| Function           | Description                    | Who Can Call |
+| ------------------ | ------------------------------ | ------------ |
+| `bid()`            | Place a bid in the auction     | Anyone       |
+| `getWinner()`      | Get current highest bidder     | Anyone       |
+| `getAllBids()`     | Get all bids placed            | Anyone       |
+| `endAuction()`     | End the auction                | Owner only   |
+| `refundUsers()`    | Refund all non-winners         | Owner only   |
+| `withdrawRefund()` | Claim your refund              | Participants |
+| `partialRefund()`  | Withdraw excess during auction | Participants |
