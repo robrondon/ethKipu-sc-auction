@@ -331,20 +331,43 @@ contract Auction {
         require(success, "Withdrawal failed");
     }
 
+    // ============================================================================
+    // VIEW FUNCTIONS
+    // ============================================================================
+
+    /**
+     * @notice Returns the current auction winner and winning bid
+     * @return winner Address of the current highest bidder
+     * @return winningBid Amount of the current highest bid
+     */
     function getWinner() external view returns (address, uint256) {
         return (highestBidder, highestBid);
     }
 
+    /**
+     * @notice Returns all bids placed in the auction
+     * @return Array of all Bid structs containing bidder, amount, and timestamp
+     */
     function getAllBids() external view returns (Bid[] memory) {
         return bids;
     }
 
+    /**
+     * @notice Returns all bids placed by a specific user
+     * @param _user Address of the user to query
+     * @return Array of UserBid structs for the specified user
+     */
     function getUserBids(
         address _user
     ) external view returns (UserBid[] memory) {
         return bidsByUser[_user];
     }
 
+    /**
+     * @notice Returns total amount deposited by a specific user
+     * @param _user Address of the user to query
+     * @return Total amount in wei deposited by the user
+     */
     function getUserTotalAmount(address _user) external view returns (uint256) {
         return totalDepositedByUser[_user];
     }
