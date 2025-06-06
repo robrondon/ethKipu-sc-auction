@@ -76,3 +76,8 @@ This contract allows users to participate in an auction by placing bids. The hig
 - **Student**: Robert Rondón
 - **Course**: Eth Kipu Ethereum Developer Pack
 - **Assignment**: Final Project - Module 2
+
+---
+
+**Deployed Contract**: `0x0A83D6FffdeD4CdE239BDB6A55566A51Fb65181c`  
+**Etherscan Link**: `https://sepolia.etherscan.io/address/0x0a83d6fffded4cde239bdb6a55566a51fb65181c`
